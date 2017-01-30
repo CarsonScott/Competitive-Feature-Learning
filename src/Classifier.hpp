@@ -60,8 +60,8 @@ public:
     Classifier(int in)
     {
         input_size = in;
-        learning_rate = 0.001;
-        decay_rate = 0.0005;
+        learning_rate = 0.0001;
+        decay_rate = 0.0001;
         for(int i = 0; i < input_size; i++)
         {
             inputs.push_back(0);
@@ -78,7 +78,7 @@ public:
         for(int i = 0; i < input_size; i++)
         {
              feature.push_back(0);
-             weight.push_back(.1);
+             weight.push_back(.5);
              error.push_back(0);
              previous_error.push_back(0);
              prog.push_back(0);
@@ -91,32 +91,33 @@ public:
         thresholds.push_back(.5);
     }
 
-    void create(Array feature, Array weight)
+    void create(Array feature, Array weight, float threshold)
     {
         create();
         features.back() = feature;
         weights.back() = weight;
+        thresholds.back() = threshold;
     }
 
     void updateError(int c, int f)
     {
         previous_errors[c][f] = errors[c][f];
-        errors[c][f] = err(inputs[f], features[c][f]);
+        errors[c][f] = werr(inputs[f], features[c][f], weights[c][f]);
     }
 
     void updateProgress(int c, int f)
     {
-        progress[c][f] = err(previous_errors[c][f], errors[c][f]);
+        progress[c][f] = werr(previous_errors[c][f], errors[c][f], weights[c][f]);
     }
 
     void updateWeight(int c, int f)
     {
-        weights[c][f] += learning_rate * errors[c][f]* (1-weights[c][f]);
+        weights[c][f] += learning_rate * progress[c][f];
     }
 
     void updateFeature(int c, int f)
     {
-        features[c][f] += learning_rate * progress[c][f] * (1-weights[c][f]);
+        features[c][f] += learning_rate * errors[c][f];
     }
 
 public:
@@ -126,26 +127,15 @@ public:
         CategorySet categories;
         for(int c = 0; c < features.size(); c++)
         {
-            float threshold = thresholds[c];
             float similarity = 1-wmse(features[c], inputs, weights[c]);
+            float threshold = thresholds[c];
 
             if(similarity > threshold)
             {
-                categories.append(c, similarity);
-                thresholds[c] += learning_rate;
-                if(thresholds[c] > 1)
-                {
-                    thresholds[c] = 1;
-                }
+                categories.append(c, 1-similarity);
             }
-            else
-            {
-                thresholds[c] -= decay_rate;
-                if(thresholds[c] < 0)
-                {
-                    thresholds[c] = 0;
-                }
-            }
+            thresholds[c] += decay_rate*(err(similarity, threshold));
+
         }
         active_categories = categories;
         return active_categories;
