@@ -44,6 +44,7 @@ struct CategorySet
 class Classifier
 {
     int input_size;
+    int class_size;
     Array inputs;
     Array thresholds;
     Matrix features;
@@ -57,9 +58,11 @@ class Classifier
     float decay_rate;
 
 public:
-    Classifier(int in)
+    Classifier(){}
+    Classifier(int in_size, int cls_size)
     {
-        input_size = in;
+        input_size = in_size;
+        class_size = cls_size;
         learning_rate = 0.0001;
         decay_rate = 0.0001;
         for(int i = 0; i < input_size; i++)
@@ -80,7 +83,7 @@ public:
              feature.push_back(0);
              weight.push_back(.5);
              error.push_back(0);
-             previous_error.push_back(0);
+             previous_error.push_back(1);
              prog.push_back(0);
         }
         features.push_back(feature);
@@ -110,14 +113,14 @@ public:
         progress[c][f] = werr(previous_errors[c][f], errors[c][f], weights[c][f]);
     }
 
-    void updateWeight(int c, int f)
+    void updateWeight(int c, int f, float error)
     {
-        weights[c][f] += learning_rate * progress[c][f];
+        weights[c][f] += learning_rate * progress[c][f]*(error);
     }
 
-    void updateFeature(int c, int f)
+    void updateFeature(int c, int f, float error)
     {
-        features[c][f] += learning_rate * errors[c][f];
+        features[c][f] += learning_rate * errors[c][f]*(error);
     }
 
 public:
@@ -125,16 +128,46 @@ public:
     {
         inputs = in;
         CategorySet categories;
+
+        int classes = 0;
+        int worst_feature = 0;
         for(int c = 0; c < features.size(); c++)
         {
             float similarity = 1-wmse(features[c], inputs, weights[c]);
             float threshold = thresholds[c];
 
-            if(similarity > threshold)
+            if(similarity > threshold || categories.labels.size() == 0)
             {
-                categories.append(c, 1-similarity);
+                if(classes < class_size)
+                {
+                    categories.append(c, 1-similarity);
+                    if(1-similarity > categories.errors[worst_feature])
+                    {
+                        worst_feature = categories.errors.size()-1;
+                    }
+                    classes ++;
+                }
+                else
+                {
+                    categories.labels[worst_feature] = c;
+                    categories.errors[worst_feature] = 1-similarity;
+
+                    for(int f = 0; f < categories.errors.size(); f++)
+                    {
+                        if(categories.errors[f] > categories.errors[worst_feature])
+                            worst_feature = f;
+                    }
+                }
             }
             thresholds[c] += decay_rate*(err(similarity, threshold));
+            if(thresholds[c] > 1)
+            {
+                thresholds[c] = 1;
+            }
+            else if(thresholds[c] < 0)
+            {
+                thresholds[c] = 0;
+            }
 
         }
         active_categories = categories;
@@ -150,8 +183,8 @@ public:
             {
                 updateError(c, f);
                 updateProgress(c, f);
-                updateWeight(c, f);
-                updateFeature(c, f);
+                updateWeight(c, f, active_categories[i].error);
+                updateFeature(c, f, active_categories[i].error);
 
                 if(weights[c][f] < 0)
                 {
