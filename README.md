@@ -1,3 +1,3 @@
-# Feature Learning
+# Competitive Feature Learning
 
-Feature learning and classification algorithm.
+Competitive feature learning and classification algorithm.
