@@ -1,7 +1,5 @@
 # Competitive Feature Learning
 
-A feature extraction and classification algorithm that learns representations of input patterns.
-
 ## Classification
 
 Features are sets of values that become active when a set of matching inputs is received. The error of each feature is calculated and compared to a threshold which determines the state (i.e. active or inactive) of the feature. 
