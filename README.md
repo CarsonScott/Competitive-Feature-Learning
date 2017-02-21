@@ -1,3 +1,3 @@
 # Competitive Feature Learning
 
-Competitive feature learning and classification algorithm.
+A feature extraction and classification algorithm that learns representations of input patterns.
