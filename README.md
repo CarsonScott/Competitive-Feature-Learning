@@ -8,4 +8,4 @@ The number of features that respond to a given input is limited by the class siz
 
 ## Learning
 
-Features are updated after the input is classified. Learning occurs in three steps: First, thresholds for each feature (active or not) are adjusted to the activation (similarity). Second, the weights of the active features are adjusted to match the importance of each value. Finally, the values of the active features are adjusted to match the input.
+Features are updated according to the input. Learning occurs in three steps: First, thresholds for each feature (active or not) are adjusted to the activation (similarity). Second, the weights of the active features are adjusted to match the importance of each value. Finally, the values of the active features are adjusted to match the input.
