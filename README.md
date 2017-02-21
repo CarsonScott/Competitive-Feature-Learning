@@ -1,3 +1,13 @@
 # Competitive Feature Learning
 
 A feature extraction and classification algorithm that learns representations of input patterns.
+
+## Classification
+
+Features are sets of values that become active when a set of matching inputs is received. The error of each feature is calculated and compared to a threshold which determines the state (i.e. active or inactive) of the feature. 
+
+The number of features that respond to a given input is limited by the class size. When an input triggers an excess number of features, the most similar features stay active while the rest become inactive. 
+
+## Learning
+
+Features are updated after the input is classified. Learning occurs in three steps: First, thresholds for each feature (active or not) are adjusted to the activation (similarity). Second, the weights of the active features are adjusted to match the importance of each value. Finally, the values of the active features are adjusted to match the input.
