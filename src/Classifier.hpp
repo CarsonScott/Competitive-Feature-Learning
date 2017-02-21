@@ -30,6 +30,19 @@ struct CategorySet
         append(category.label, category.error);
     }
 
+    void insert(int i, float label, float error)
+    {
+        labels.insert(labels.begin() + i, label);
+        errors.insert(errors.begin() + i, error);
+
+    }
+
+    void erase(int i)
+    {
+        labels.erase(labels.begin() + i);
+        errors.erase(errors.begin() + i);
+    }
+
     int size()
     {
         return labels.size();
@@ -56,6 +69,23 @@ class Classifier
     CategorySet active_categories;
     float learning_rate;
     float decay_rate;
+
+    int get_sorted_index(Array arr, float val)
+    {
+        int index = 0;
+        while(index < arr.size())
+        {
+            if(val <= arr[index])
+            {
+                return index;
+            }
+            else
+            {
+                index += 1;
+            }
+        }
+        return arr.size();
+    }
 
 public:
     Classifier(){}
@@ -129,37 +159,32 @@ public:
         inputs = in;
         CategorySet categories;
 
-        int classes = 0;
-        int worst_feature = 0;
         for(int c = 0; c < features.size(); c++)
         {
             float similarity = 1-wmse(features[c], inputs, weights[c]);
             float threshold = thresholds[c];
 
-            if(similarity > threshold || categories.labels.size() == 0)
+            if(similarity > threshold || categories.errors.size() == 0)
             {
-                if(classes < class_size)
+                float error = 1 - similarity;
+                int index = get_sorted_index(categories.errors, error);
+                if(categories.errors.size() > 0)
                 {
-                    categories.append(c, 1-similarity);
-                    if(1-similarity > categories.errors[worst_feature])
+                    if(index < categories.errors.size())
                     {
-                        worst_feature = categories.errors.size()-1;
+                        categories.insert(index, c, error);
+                        if(categories.errors.size() > class_size)
+                        {
+                            categories.erase(categories.errors.size()-1);
+                        }
                     }
-                    classes ++;
                 }
                 else
                 {
-                    categories.labels[worst_feature] = c;
-                    categories.errors[worst_feature] = 1-similarity;
-
-                    for(int f = 0; f < categories.errors.size(); f++)
-                    {
-                        if(categories.errors[f] > categories.errors[worst_feature])
-                            worst_feature = f;
-                    }
+                    categories.append(c, error);
                 }
             }
-            thresholds[c] += decay_rate*(err(similarity, threshold));
+            thresholds[c] += decay_rate * (err(similarity, threshold));
             if(thresholds[c] > 1)
             {
                 thresholds[c] = 1;

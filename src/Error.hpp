@@ -1,6 +1,12 @@
 #ifndef ERROR_HPP_INCLUDED
 #define ERROR_HPP_INCLUDED
 
+#include <vector>
+#include <cmath>
+
+#define Array std::vector<float>
+#define Matrix std::vector<Array>
+
 float err(float x1, float x2)
 {
     float e = x1-x2;
