@@ -142,12 +142,12 @@ public:
         progress[c][f] = werr(previous_errors[c][f], errors[c][f], weights[c][f]);
     }
 
-    void updateWeight(int c, int f, float error)
+    void updateWeight(int c, int f)
     {
         weights[c][f] += learning_rate * ((progress[c][f]+1) / (1+errors[c][f]));
     }
 
-    void updateFeature(int c, int f, float error)
+    void updateFeature(int c, int f)
     {
         features[c][f] += learning_rate * errors[c][f];
     }
@@ -208,8 +208,8 @@ public:
             {
                 updateError(c, f);
                 updateProgress(c, f);
-                updateWeight(c, f, active_categories[i].error);
-                updateFeature(c, f, active_categories[i].error);
+                updateWeight(c, f);
+                updateFeature(c, f);
 
                 if(weights[c][f] < 0)
                 {
