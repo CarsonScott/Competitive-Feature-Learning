@@ -2,7 +2,6 @@
 #define CLASSIFIER_HPP_INCLUDED
 
 #include "Error.hpp"
-
 struct Category
 {
     float label;
@@ -94,7 +93,7 @@ public:
         input_size = in_size;
         class_size = cls_size;
         learning_rate = 0.0001;
-        decay_rate = 0.0001;
+        decay_rate = 0.00001;
         for(int i = 0; i < input_size; i++)
         {
             inputs.push_back(0);
@@ -145,12 +144,12 @@ public:
 
     void updateWeight(int c, int f, float error)
     {
-        weights[c][f] += learning_rate * progress[c][f]*(error);
+        weights[c][f] += learning_rate * ((progress[c][f]+1) / (1+errors[c][f]));
     }
 
     void updateFeature(int c, int f, float error)
     {
-        features[c][f] += learning_rate * errors[c][f]*(error);
+        features[c][f] += learning_rate * errors[c][f];
     }
 
 public:
@@ -164,7 +163,7 @@ public:
             float similarity = 1-wmse(features[c], inputs, weights[c]);
             float threshold = thresholds[c];
 
-            if(similarity > threshold || categories.errors.size() == 0)
+            if(similarity >= threshold)
             {
                 float error = 1 - similarity;
                 int index = get_sorted_index(categories.errors, error);
@@ -184,7 +183,7 @@ public:
                     categories.append(c, error);
                 }
             }
-            thresholds[c] += decay_rate * (err(similarity, threshold));
+            thresholds[c] -= decay_rate;
             if(thresholds[c] > 1)
             {
                 thresholds[c] = 1;
@@ -204,6 +203,7 @@ public:
         for(int i = 0; i < active_categories.size(); i++)
         {
             int c = active_categories[i].label;
+            thresholds[c] += learning_rate;
             for(int f = 0; f < input_size; f++)
             {
                 updateError(c, f);
@@ -221,6 +221,30 @@ public:
                 }
             }
         }
+    }
+
+
+    Array decode(CategorySet c)
+    {
+        Array rep;
+        for(int i = 0; i < inputs.size(); i++)
+        {
+            float val = 0;
+
+            if(c.labels.size() > 0)
+            {
+                for(int j = 0; j < c.labels.size(); j++)
+                {
+                    int index = c.labels[j];
+                    val += features[index][i] * weights[index][i];
+                }
+                val /= c.labels.size();
+            }
+
+            rep.push_back(val);
+        }
+
+        return rep;
     }
 };
 
